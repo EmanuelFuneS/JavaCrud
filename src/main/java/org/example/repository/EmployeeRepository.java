@@ -30,7 +30,7 @@ public class EmployeeRepository implements Repository<Employee> {
     public Employee getById(Integer id) throws SQLException {
         Employee employee = null;
 
-        try (PreparedStatement myStamt = getConnection().prepareStatement("SELECT * FROM Employees WHERE id = ?")) {
+        try (PreparedStatement myStamt = getConnection().prepareStatement("SELECT * FROM employees WHERE id = ?")) {
             myStamt.setInt(1, id);
             try (ResultSet myRes = myStamt.executeQuery()) {
                 if (myRes.next()) {
@@ -43,13 +43,39 @@ public class EmployeeRepository implements Repository<Employee> {
     }
 
     @Override
-    public void save(Employee employee) {
+    public void save(Employee employee) throws SQLException {
+        String sql;
+        if(employee.getId() != null && employee.getId()>0){
+            sql = "UPDATE employees SET first_name = ?, pa_surname= ?, ma_surname= ?, email= ?, salary= ? WHERE id = ?";
+        } else {
+            sql = "INSERT INTO employees (first_name, pa_surname, ma_surname, email, salary) VALUES (?,?,?,?,?) ";
+        }
+
+        try (PreparedStatement myStmt = getConnection().prepareStatement(sql)){
+            myStmt.setString(1, employee.getFirst_name());
+            myStmt.setString(2, employee.getPa_surname());
+            myStmt.setString(3, employee.getMa_surname());
+            myStmt.setString(4, employee.getEmail());
+            myStmt.setFloat(5, employee.getSalary());
+            if(employee.getId() != null && employee.getId()>0){
+                myStmt.setInt(6, employee.getId());
+                myStmt.executeUpdate();
+                System.out.println("UPDATE");
+                return;
+            }
+            myStmt.execute();
+            System.out.println("NEW INSERT");
+        }
 
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(Integer id) throws SQLException {
+        try (PreparedStatement myStmt = getConnection().prepareStatement("DELETE FROM employees WHERE id = ?")) {
+            myStmt.setInt(1, id);
+            myStmt.executeUpdate();
 
+        }
     }
 
     private Employee createEmployee(ResultSet myRes) throws SQLException {
